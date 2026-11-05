@@ -1,0 +1,204 @@
+{
+  "raw_rows": 5574,
+  "missing_values": {
+    "label": 0,
+    "message": 0
+  },
+  "duplicate_rows_removed": 414,
+  "cleaned_rows": 5160,
+  "ham_count": 4518,
+  "spam_count": 642,
+  "ham_percentage": 87.56,
+  "spam_percentage": 12.44,
+  "length_statistics": {
+    "ham": {
+      "avg_char_length": 70.86,
+      "median_char_length": 53.0,
+      "avg_word_count": 14.23,
+      "median_word_count": 11.0
+    },
+    "spam": {
+      "avg_char_length": 137.41,
+      "median_char_length": 148.0,
+      "avg_word_count": 23.7,
+      "median_word_count": 25.0
+    }
+  },
+  "top_spam_terms": [
+    {
+      "term": "currencytoken",
+      "count": 267
+    },
+    {
+      "term": "free",
+      "count": 190
+    },
+    {
+      "term": "txt",
+      "count": 131
+    },
+    {
+      "term": "ur",
+      "count": 119
+    },
+    {
+      "term": "stop",
+      "count": 111
+    },
+    {
+      "term": "text",
+      "count": 107
+    },
+    {
+      "term": "mobile",
+      "count": 105
+    },
+    {
+      "term": "reply",
+      "count": 96
+    },
+    {
+      "term": "claim",
+      "count": 95
+    },
+    {
+      "term": "urltoken",
+      "count": 88
+    },
+    {
+      "term": "prize",
+      "count": 79
+    },
+    {
+      "term": "just",
+      "count": 66
+    },
+    {
+      "term": "cash",
+      "count": 64
+    },
+    {
+      "term": "new",
+      "count": 64
+    },
+    {
+      "term": "no",
+      "count": 61
+    }
+  ],
+  "top_ham_terms": [
+    {
+      "term": "not",
+      "count": 393
+    },
+    {
+      "term": "gt",
+      "count": 288
+    },
+    {
+      "term": "lt",
+      "count": 287
+    },
+    {
+      "term": "just",
+      "count": 282
+    },
+    {
+      "term": "no",
+      "count": 275
+    },
+    {
+      "term": "ok",
+      "count": 256
+    },
+    {
+      "term": "lt gt",
+      "count": 254
+    },
+    {
+      "term": "ll",
+      "count": 233
+    },
+    {
+      "term": "got",
+      "count": 227
+    },
+    {
+      "term": "know",
+      "count": 226
+    },
+    {
+      "term": "like",
+      "count": 224
+    },
+    {
+      "term": "good",
+      "count": 217
+    },
+    {
+      "term": "come",
+      "count": 214
+    },
+    {
+      "term": "ur",
+      "count": 203
+    },
+    {
+      "term": "time",
+      "count": 193
+    }
+  ],
+  "char_length_histogram": {
+    "labels": [
+      "0-20",
+      "20-40",
+      "40-60",
+      "60-80",
+      "80-100",
+      "100-120",
+      "120-140",
+      "140-160",
+      "160-180",
+      "180-200",
+      "200-220",
+      "220-240",
+      "240-260",
+      "260-280",
+      "280-300"
+    ],
+    "ham": [
+      125,
+      1417,
+      982,
+      596,
+      395,
+      258,
+      250,
+      286,
+      78,
+      31,
+      17,
+      17,
+      13,
+      7,
+      46
+    ],
+    "spam": [
+      2,
+      6,
+      15,
+      24,
+      24,
+      49,
+      109,
+      335,
+      73,
+      4,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  }
+}

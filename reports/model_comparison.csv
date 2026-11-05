@@ -1,0 +1,6 @@
+model_id,model_name,model_type,val_f1,test_accuracy,test_precision,test_recall,test_f1,test_roc_auc,test_pr_auc
+decision_tree,Decision Tree,Single Learner (Baseline),0.8473,0.9535,0.7985,0.8359,0.8168,0.882,0.7031
+random_forest,Random Forest,Bagging Ensemble,0.9231,0.9816,0.9504,0.8984,0.9237,0.9914,0.9764
+adaboost,AdaBoost,Adaptive Boosting Ensemble,0.8516,0.9535,0.7817,0.8672,0.8222,0.9755,0.9015
+gradient_boosting,Gradient Boosting,Gradient Boosting Ensemble,0.8627,0.9632,0.8358,0.875,0.855,0.9756,0.9154
+xgboost,XGBoost,Regularized Gradient Boosting,0.8794,0.9554,0.7847,0.8828,0.8309,0.9805,0.9346

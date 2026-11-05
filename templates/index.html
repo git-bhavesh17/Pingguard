@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PingGuard — Ensemble SMS Spam Detection & Safety Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="shield-icon">PG</div>
+      <div>
+        <h1>PingGuard</h1>
+        <p class="subtitle">Ensemble Learning-Based SMS Spam Detection &amp; Safety Dashboard</p>
+      </div>
+    </div>
+    <nav class="nav-tabs">
+      <button class="nav-btn active" data-tab="overview">Overview</button>
+      <button class="nav-btn" data-tab="detector">Live SMS Detector</button>
+      <button class="nav-btn" data-tab="analytics">Analytics</button>
+      <button class="nav-btn" data-tab="comparison">Model Comparison</button>
+      <button class="nav-btn" data-tab="about">About the Project</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div id="global-alert" class="alert-banner hidden"></div>
+
+    <!-- 1. OVERVIEW -->
+    <section id="tab-overview" class="tab-panel active">
+      <div class="hero-card">
+        <div>
+          <span class="badge">Real-Time Ensemble Screening</span>
+          <h2>Single Decision Tree vs. Ensemble Classifiers for SMS Safety</h2>
+          <p>
+            PingGuard evaluates a baseline <strong>Decision Tree</strong> against four ensemble models
+            (<strong>Random Forest</strong>, <strong>AdaBoost</strong>, <strong>Gradient Boosting</strong>, and <strong>XGBoost</strong>)
+            trained on the official UCI SMS Spam Collection dataset.
+          </p>
+        </div>
+        <div>
+          <button class="btn-primary" onclick="switchTab('detector')">Open Live SMS Detector</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Cleaned Dataset Records</span>
+          <strong class="kpi-value" id="kpi-total-rows">--</strong>
+          <span class="kpi-sub" id="kpi-duplicates-removed">-- duplicates removed</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Ham Messages</span>
+          <strong class="kpi-value text-teal" id="kpi-ham-count">--</strong>
+          <span class="kpi-sub" id="kpi-ham-pct">--% of dataset</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Spam Messages</span>
+          <strong class="kpi-value text-rose" id="kpi-spam-count">--</strong>
+          <span class="kpi-sub" id="kpi-spam-pct">--% of dataset</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Selected Default Model</span>
+          <strong class="kpi-value text-sky" id="kpi-default-model">--</strong>
+          <span class="kpi-sub">Chosen via Validation Spam F1</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Held-Out Test Spam F1</span>
+          <strong class="kpi-value" id="kpi-test-f1">--</strong>
+          <span class="kpi-sub" id="kpi-test-prec-rec">Precision: -- | Recall: --</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Held-Out Test ROC-AUC</span>
+          <strong class="kpi-value" id="kpi-test-roc">--</strong>
+          <span class="kpi-sub" id="kpi-test-acc">Test Accuracy: --</span>
+        </div>
+      </div>
+
+      <div class="two-col-grid">
+        <div class="card">
+          <h3>How to Use This Application</h3>
+          <ol class="step-list">
+            <li>Open <strong>Live SMS Detector</strong> to paste any SMS or test sample messages across all 5 models in real time.</li>
+            <li>Open <strong>Analytics</strong> to inspect class balance, character length distributions, and top spam/ham terms.</li>
+            <li>Open <strong>Model Comparison</strong> to compare metrics, confusion matrices, ROC/PR curves, and global feature importances.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3>Scope &amp; Safety Notice</h3>
+          <p>
+            This application is an educational screening prototype trained on English SMS messages. It does not visit URLs or guarantee sender authenticity.
+            Never click suspicious links or share OTPs/PINs solely because a message is classified as <em>HAM</em>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. LIVE SMS DETECTOR -->
+    <section id="tab-detector" class="tab-panel">
+      <div class="detector-layout">
+        <div class="card">
+          <h3>Live SMS Detector</h3>
+          <p class="muted-text">All predictions run locally on your machine. Messages are never logged or sent externally.</p>
+
+          <div class="sample-bar">
+            <span class="sample-label">Sample Messages:</span>
+            <button type="button" class="chip" data-sample="ham_casual">Ham: Casual Chat</button>
+            <button type="button" class="chip" data-sample="ham_delivery">Ham: College Update</button>
+            <button type="button" class="chip" data-sample="spam_prize">Spam: Prize Lure</button>
+            <button type="button" class="chip" data-sample="spam_phish">Spam: Urgent KYC / OTP</button>
+          </div>
+
+          <form id="predict-form">
+            <label for="sms-input" class="field-label">Enter SMS Message</label>
+            <textarea
+              id="sms-input"
+              rows="5"
+              maxlength="2000"
+              placeholder="Paste or type an SMS message here..."
+            ></textarea>
+            <div class="textarea-footer">
+              <span id="char-counter">0 / 2000 characters</span>
+              <button type="button" id="clear-btn" class="btn-secondary">Clear</button>
+            </div>
+
+            <div class="controls-row">
+              <div class="control-group">
+                <label for="model-select" class="field-label">Select Classifier</label>
+                <select id="model-select"></select>
+              </div>
+              <button type="submit" class="btn-primary">Analyze Message</button>
+            </div>
+          </form>
+          <div id="detector-error" class="error-box hidden"></div>
+        </div>
+
+        <div class="card">
+          <h3>Prediction &amp; Warning Clues</h3>
+          <div id="result-empty" class="empty-state">
+            Enter an SMS message and click <strong>Analyze Message</strong> to view the real-time prediction.
+          </div>
+
+          <div id="result-loading" class="empty-state hidden">
+            <p>Analyzing message with selected classifier...</p>
+          </div>
+
+          <div id="result-content" class="hidden">
+            <div class="verdict-banner" id="verdict-banner">
+              <div>
+                <span class="kpi-label">Predicted Class</span>
+                <h2 id="verdict-title">--</h2>
+              </div>
+              <span id="verdict-model-badge" class="badge">--</span>
+            </div>
+
+            <div class="score-section">
+              <div class="score-header">
+                <span>Estimated Spam Score (Model Estimate)</span>
+                <strong id="score-percentage">0.0%</strong>
+              </div>
+              <div class="progress-track">
+                <div id="score-bar" class="progress-fill" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div>
+              <h4>Supplementary Rule-Based Warning Signs</h4>
+              <p class="muted-small">Checked independently of the machine learning classifier:</p>
+              <ul id="warning-list" class="warning-list"></ul>
+            </div>
+
+            <div class="safety-footnote" id="result-disclaimer"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. ANALYTICS -->
+    <section id="tab-analytics" class="tab-panel">
+      <div class="two-col-grid">
+        <div class="card">
+          <h3>Class Distribution (Ham vs. Spam)</h3>
+          <canvas id="chart-class-dist" height="220"></canvas>
+        </div>
+        <div class="card">
+          <h3>Character Length Distribution by Class</h3>
+          <canvas id="chart-char-hist" height="220"></canvas>
+        </div>
+      </div>
+
+      <div class="two-col-grid">
+        <div class="card">
+          <h3>Top 15 Frequent Terms / Bigrams in SPAM</h3>
+          <canvas id="chart-spam-terms" height="260"></canvas>
+        </div>
+        <div class="card">
+          <h3>Top 15 Frequent Terms / Bigrams in HAM</h3>
+          <canvas id="chart-ham-terms" height="260"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>EDA Plots Generated During Training</h3>
+        <div class="figure-gallery">
+          <figure>
+            <img src="/static/images/03_char_length_distribution.png" alt="Character Length Distribution" />
+            <figcaption>Character Length Distribution</figcaption>
+          </figure>
+          <figure>
+            <img src="/static/images/04_word_count_distribution.png" alt="Word Count Distribution" />
+            <figcaption>Word Count Distribution</figcaption>
+          </figure>
+          <figure>
+            <img src="/static/images/05_avg_length_comparison.png" alt="Average Length Comparison" />
+            <figcaption>Average Character &amp; Word Lengths</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. MODEL COMPARISON -->
+    <section id="tab-comparison" class="tab-panel">
+      <div class="card">
+        <h3>Held-Out Test Set Metrics Comparison</h3>
+        <div class="table-responsive">
+          <table class="metrics-table" id="comparison-table">
+            <thead>
+              <tr>
+                <th>Classifier</th>
+                <th>Type</th>
+                <th>Val Spam F1</th>
+                <th>Test Accuracy</th>
+                <th>Spam Precision</th>
+                <th>Spam Recall</th>
+                <th>Test Spam F1</th>
+                <th>ROC-AUC</th>
+                <th>PR-AUC</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Interactive Performance Comparison</h3>
+        <canvas id="chart-model-comparison" height="105"></canvas>
+      </div>
+
+      <div class="card">
+        <div class="inspector-header">
+          <div>
+            <h3>Model Deep-Dive Inspector</h3>
+            <p class="muted-text">Select any model to inspect its Confusion Matrix, ROC/PR curves, and Global Feature Importance.</p>
+          </div>
+          <div class="control-group">
+            <label for="inspector-model-select" class="field-label">Select Model:</label>
+            <select id="inspector-model-select"></select>
+          </div>
+        </div>
+
+        <p id="inspector-description" class="model-desc-banner"></p>
+
+        <div class="three-col-grid">
+          <div class="subcard">
+            <h4>Test Set Confusion Matrix</h4>
+            <div id="confusion-matrix-grid" class="cm-grid"></div>
+          </div>
+          <div class="subcard">
+            <h4>ROC &amp; Precision-Recall Curves</h4>
+            <canvas id="chart-inspector-curves" height="220"></canvas>
+          </div>
+          <div class="subcard">
+            <h4>Top Global TF-IDF Features</h4>
+            <canvas id="chart-feature-importance" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. ABOUT -->
+    <section id="tab-about" class="tab-panel">
+      <div class="two-col-grid">
+        <div class="card">
+          <h3>Methodology &amp; Ensemble Learning</h3>
+          <ul class="bullet-list">
+            <li><strong>Stratified 60/20/20 Split:</strong> 60% Training, 20% Validation (for selecting the default model by Spam F1-score), and 20% Held-Out Test.</li>
+            <li><strong>Leakage-Free TF-IDF:</strong> Fitted strictly on the training set (1,500 max features, unigrams &amp; bigrams, sublinear TF).</li>
+            <li><strong>Models Evaluated:</strong> Decision Tree (single learner baseline), Random Forest (bagging), AdaBoost, Gradient Boosting, and XGBoost.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Dataset Citation &amp; Limitations</h3>
+          <blockquote class="citation-box">
+            Almeida, T. A., and Hidalgo, J. M. (2011). <em>SMS Spam Collection</em>. UCI Machine Learning Repository. DOI: 10.24432/C5CC84.
+          </blockquote>
+          <p class="muted-text">
+            <strong>Limitations:</strong> Trained on historical English SMS data. Does not validate live URLs or sender phone numbers.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
