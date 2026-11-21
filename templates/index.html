@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PingGuard — Ensemble SMS Spam Detection & Safety Dashboard</title>
+  <title>PingGuard v2.0 — SMS Spam Detection &amp; Safety Dashboard</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
@@ -12,8 +12,8 @@
     <div class="brand">
       <div class="shield-icon">PG</div>
       <div>
-        <h1>PingGuard</h1>
-        <p class="subtitle">Ensemble Learning-Based SMS Spam Detection &amp; Safety Dashboard</p>
+        <h1>PingGuard <span class="version-pill">v2.0</span></h1>
+        <p class="subtitle">Hybrid Ensemble, Unsupervised &amp; Q-Learning SMS Safety Dashboard</p>
       </div>
     </div>
     <nav class="nav-tabs">
@@ -21,7 +21,8 @@
       <button class="nav-btn" data-tab="detector">Live SMS Detector</button>
       <button class="nav-btn" data-tab="analytics">Analytics</button>
       <button class="nav-btn" data-tab="comparison">Model Comparison</button>
-      <button class="nav-btn" data-tab="about">About the Project</button>
+      <button class="nav-btn nav-btn-highlight" data-tab="cce5">Upgrades &amp; Lab</button>
+      <button class="nav-btn" data-tab="about">About</button>
     </nav>
   </header>
 
@@ -32,16 +33,17 @@
     <section id="tab-overview" class="tab-panel active">
       <div class="hero-card">
         <div>
-          <span class="badge">Real-Time Ensemble Screening</span>
-          <h2>Single Decision Tree vs. Ensemble Classifiers for SMS Safety</h2>
+          <span class="badge">v2.0 Upgraded Architecture</span>
+          <h2>Hybrid ML Pipeline for Real-Time SMS Spam Screening</h2>
           <p>
-            PingGuard evaluates a baseline <strong>Decision Tree</strong> against four ensemble models
-            (<strong>Random Forest</strong>, <strong>AdaBoost</strong>, <strong>Gradient Boosting</strong>, and <strong>XGBoost</strong>)
-            trained on the official UCI SMS Spam Collection dataset.
+            PingGuard v2.0 combines <strong>Hybrid Word + Character N-Gram TF-IDF</strong>,
+            <strong>Linear/SVM &amp; Ensemble Classifiers</strong>, <strong>PCA &amp; K-Means clustering</strong>,
+            a <strong>Soft-Voting Meta-Ensemble</strong>, and a <strong>Q-Learning adaptive policy agent</strong>.
           </p>
         </div>
-        <div>
-          <button class="btn-primary" onclick="switchTab('detector')">Open Live SMS Detector</button>
+        <div class="hero-actions">
+          <button class="btn-primary" onclick="switchTab('detector')">Open Live Detector</button>
+          <button class="btn-secondary" onclick="switchTab('cce5')">View Upgrades &amp; Lab</button>
         </div>
       </div>
 
@@ -62,7 +64,7 @@
           <span class="kpi-sub" id="kpi-spam-pct">--% of dataset</span>
         </div>
         <div class="kpi-card">
-          <span class="kpi-label">Selected Default Model</span>
+          <span class="kpi-label">Selected Champion Model</span>
           <strong class="kpi-value text-sky" id="kpi-default-model">--</strong>
           <span class="kpi-sub">Chosen via Validation Spam F1</span>
         </div>
@@ -80,18 +82,18 @@
 
       <div class="two-col-grid">
         <div class="card">
-          <h3>How to Use This Application</h3>
+          <h3>How to Explore PingGuard v2.0</h3>
           <ol class="step-list">
-            <li>Open <strong>Live SMS Detector</strong> to paste any SMS or test sample messages across all 5 models in real time.</li>
-            <li>Open <strong>Analytics</strong> to inspect class balance, character length distributions, and top spam/ham terms.</li>
-            <li>Open <strong>Model Comparison</strong> to compare metrics, confusion matrices, ROC/PR curves, and global feature importances.</li>
+            <li>Open <strong>Live SMS Detector</strong> to test custom or obfuscated SMS messages across all 8 models and train the Q-Learning policy with live feedback.</li>
+            <li>Open <strong>Upgrades &amp; Lab</strong> to see the Before vs. After accuracy gain, PCA 2D cluster map, K-Means Elbow curve, and Q-Table.</li>
+            <li>Open <strong>Model Comparison</strong> to inspect confusion matrices, tuned thresholds, ROC/PR curves, and feature importances.</li>
           </ol>
         </div>
         <div class="card">
-          <h3>Scope &amp; Safety Notice</h3>
+          <h3>Scope &amp; AI Ethics Notice</h3>
           <p>
-            This application is an educational screening prototype trained on English SMS messages. It does not visit URLs or guarantee sender authenticity.
-            Never click suspicious links or share OTPs/PINs solely because a message is classified as <em>HAM</em>.
+            PingGuard is an educational machine learning prototype running 100% locally. User-entered SMS texts are never logged or sent to external servers.
+            A <em>HAM</em> prediction is a statistical estimate and never a guarantee of link or sender safety.
           </p>
         </div>
       </div>
@@ -101,8 +103,8 @@
     <section id="tab-detector" class="tab-panel">
       <div class="detector-layout">
         <div class="card">
-          <h3>Live SMS Detector</h3>
-          <p class="muted-text">All predictions run locally on your machine. Messages are never logged or sent externally.</p>
+          <h3>Live SMS Detector (Hybrid Word + Char TF-IDF)</h3>
+          <p class="muted-text">All predictions run locally. Try obfuscated spam like <code>f.r.e.e</code> or <code>w1n</code> to test Character N-Grams.</p>
 
           <div class="sample-bar">
             <span class="sample-label">Sample Messages:</span>
@@ -110,6 +112,7 @@
             <button type="button" class="chip" data-sample="ham_delivery">Ham: College Update</button>
             <button type="button" class="chip" data-sample="spam_prize">Spam: Prize Lure</button>
             <button type="button" class="chip" data-sample="spam_phish">Spam: Urgent KYC / OTP</button>
+            <button type="button" class="chip" data-sample="spam_obfuscated">Spam: Obfuscated Text</button>
           </div>
 
           <form id="predict-form">
@@ -127,7 +130,7 @@
 
             <div class="controls-row">
               <div class="control-group">
-                <label for="model-select" class="field-label">Select Classifier</label>
+                <label for="model-select" class="field-label">Select Classifier (8 Models)</label>
                 <select id="model-select"></select>
               </div>
               <button type="submit" class="btn-primary">Analyze Message</button>
@@ -137,13 +140,13 @@
         </div>
 
         <div class="card">
-          <h3>Prediction &amp; Warning Clues</h3>
+          <h3>Prediction, Policy Action &amp; Warning Clues</h3>
           <div id="result-empty" class="empty-state">
             Enter an SMS message and click <strong>Analyze Message</strong> to view the real-time prediction.
           </div>
 
           <div id="result-loading" class="empty-state hidden">
-            <p>Analyzing message with selected classifier...</p>
+            <p>Extracting Word + Char N-Gram features &amp; running inference...</p>
           </div>
 
           <div id="result-content" class="hidden">
@@ -152,17 +155,37 @@
                 <span class="kpi-label">Predicted Class</span>
                 <h2 id="verdict-title">--</h2>
               </div>
-              <span id="verdict-model-badge" class="badge">--</span>
+              <div class="verdict-badges">
+                <span id="verdict-model-badge" class="badge">--</span>
+                <span id="decision-threshold-badge" class="badge badge-amber">Cutoff: --</span>
+              </div>
             </div>
 
             <div class="score-section">
               <div class="score-header">
-                <span>Estimated Spam Score (Model Estimate)</span>
+                <span>Estimated Spam Score (Model Probability)</span>
                 <strong id="score-percentage">0.0%</strong>
               </div>
               <div class="progress-track">
                 <div id="score-bar" class="progress-fill" style="width: 0%"></div>
               </div>
+            </div>
+
+            <!-- Q-Learning Agent Policy Box -->
+            <div class="rl-box">
+              <div class="rl-box-header">
+                <span class="kpi-label">Q-Learning Adaptive Agent</span>
+                <span id="rl-state-badge" class="badge">State: --</span>
+              </div>
+              <p class="rl-action-text">Recommended Policy Action: <strong id="rl-action-title">--</strong></p>
+              <div class="rl-feedback-row">
+                <span class="muted-small">Train Agent Policy (Bellman Update):</span>
+                <div class="rl-btn-group">
+                  <button type="button" id="rl-feedback-correct" class="btn-rl-good">Correct (+10 Reward)</button>
+                  <button type="button" id="rl-feedback-wrong" class="btn-rl-bad">Wrong (-15 Penalty)</button>
+                </div>
+              </div>
+              <div id="rl-feedback-msg" class="rl-feedback-msg hidden"></div>
             </div>
 
             <div>
@@ -223,13 +246,14 @@
     <!-- 4. MODEL COMPARISON -->
     <section id="tab-comparison" class="tab-panel">
       <div class="card">
-        <h3>Held-Out Test Set Metrics Comparison</h3>
+        <h3>Held-Out Test Set Metrics Comparison (All 8 Models)</h3>
         <div class="table-responsive">
           <table class="metrics-table" id="comparison-table">
             <thead>
               <tr>
                 <th>Classifier</th>
-                <th>Type</th>
+                <th>Category / Type</th>
+                <th>Tuned Cutoff</th>
                 <th>Val Spam F1</th>
                 <th>Test Accuracy</th>
                 <th>Spam Precision</th>
@@ -253,7 +277,7 @@
         <div class="inspector-header">
           <div>
             <h3>Model Deep-Dive Inspector</h3>
-            <p class="muted-text">Select any model to inspect its Confusion Matrix, ROC/PR curves, and Global Feature Importance.</p>
+            <p class="muted-text">Select any of the 8 classifiers to inspect its Confusion Matrix, ROC/PR curves, and Global Feature Importance.</p>
           </div>
           <div class="control-group">
             <label for="inspector-model-select" class="field-label">Select Model:</label>
@@ -280,15 +304,146 @@
       </div>
     </section>
 
-    <!-- 5. ABOUT -->
+    <!-- 5. UPGRADES & ML LAB -->
+    <section id="tab-cce5" class="tab-panel">
+      <div class="card">
+        <span class="badge">v1.0 → v2.0 Evolution</span>
+        <h2 style="margin: 0.4rem 0 0.6rem;">Key Enhancements &amp; Architecture Upgrades</h2>
+        <p class="muted-text" id="cce5-feature-summary">
+          Loading hybrid feature statistics...
+        </p>
+        <div class="upgrade-grid">
+          <div class="upgrade-card">
+            <span class="unit-tag">Supervised Learning</span>
+            <h4>Linear SVM, Logistic Regression &amp; Entropy Tree</h4>
+            <p>Added L2 Logistic Regression and Calibrated Linear SVM (strongest linear baselines for sparse text) and configured Decision Tree with Entropy / Information Gain splits.</p>
+          </div>
+          <div class="upgrade-card">
+            <span class="unit-tag">Unsupervised Learning</span>
+            <h4>PCA 2D Projection &amp; K-Means Elbow Clustering</h4>
+            <p>Applied Principal Component Analysis (PCA) to visualize Ham vs. Spam separation in 2D and K-Means with the Elbow Method to discover hidden spam sub-categories automatically.</p>
+          </div>
+          <div class="upgrade-card">
+            <span class="unit-tag">Ensemble &amp; Feature Engineering</span>
+            <h4>Hybrid Word+Char TF-IDF, Soft-Voting &amp; Threshold Tuning</h4>
+            <p>Combined Word TF-IDF with Character N-Grams (3–5 chars) to catch obfuscated text, tuned decision cutoffs on the validation set, and added a Weighted Soft-Voting Meta-Ensemble.</p>
+          </div>
+          <div class="upgrade-card">
+            <span class="unit-tag">Reinforcement Learning &amp; AI Ethics</span>
+            <h4>Q-Learning Screening Agent &amp; Bias/Privacy Audit</h4>
+            <p>Implemented a Bellman Q-Learning agent mapping risk states to Allow/Quarantine/Block actions with live user feedback, alongside False Positive/Negative ethics monitoring.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Before vs After Benchmark -->
+      <div class="two-col-grid">
+        <div class="card">
+          <h3>Before vs. After: v1.0 Baseline vs. v2.0 Enhanced</h3>
+          <p class="muted-text">Evaluated on the exact same 20% held-out test set for an apples-to-apples comparison.</p>
+          <div class="table-responsive" style="margin-top: 0.85rem;">
+            <table class="metrics-table">
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th>v1.0 Baseline (RF)</th>
+                  <th>v2.0 Enhanced</th>
+                  <th>Improvement</th>
+                </tr>
+              </thead>
+              <tbody id="cce5-benchmark-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3>v1.0 vs. v2.0 Visual Gain</h3>
+          <canvas id="chart-cce5-benchmark" height="220"></canvas>
+        </div>
+      </div>
+
+      <!-- Unsupervised Learning Lab -->
+      <div class="two-col-grid">
+        <div class="card">
+          <div class="inspector-header">
+            <h3>PCA 2D Visualization (Ham vs. Spam)</h3>
+            <span id="pca-variance-badge" class="badge">Variance: --</span>
+          </div>
+          <p class="muted-text">Reduces high-dimensional TF-IDF vectors into 2 Principal Components to inspect natural class separation.</p>
+          <canvas id="chart-pca-scatter" height="230"></canvas>
+        </div>
+        <div class="card">
+          <h3>K-Means Elbow Method (Spam Messages)</h3>
+          <p class="muted-text">Plots Within-Cluster Sum of Squares (Inertia) across K=2..6 to choose optimal spam sub-clusters.</p>
+          <canvas id="chart-kmeans-elbow" height="230"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Auto-Discovered Spam Sub-Clusters (K-Means, K=3)</h3>
+        <p class="muted-text">Unsupervised K-Means automatically groups spam SMS into distinct themes based on centroid TF-IDF keywords:</p>
+        <div id="kmeans-clusters-grid" class="three-col-grid"></div>
+      </div>
+
+      <!-- Q-Learning & AI Ethics -->
+      <div class="two-col-grid">
+        <div class="card">
+          <div class="inspector-header">
+            <h3>Live Q-Learning Q-Table (MDP Policy)</h3>
+            <span id="q-feedback-count" class="badge">Live Updates: 0</span>
+          </div>
+          <p class="muted-text">
+            Updates via Bellman Equation: <code>Q(s,a) ← Q(s,a) + α [r + γ·max Q(s',a') − Q(s,a)]</code>.
+            Test messages in the Live Detector and click Reward/Penalty to watch these Q-values adapt live!
+          </p>
+          <div class="table-responsive" style="margin-top: 0.85rem;">
+            <table class="metrics-table">
+              <thead>
+                <tr>
+                  <th>State (Risk Bucket)</th>
+                  <th>Q(Allow Ham)</th>
+                  <th>Q(Quarantine)</th>
+                  <th>Q(Block Spam)</th>
+                  <th>Best Policy</th>
+                </tr>
+              </thead>
+              <tbody id="q-table-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Ethics in AI — Bias &amp; Privacy Audit</h3>
+          <div class="ethics-grid">
+            <div class="subcard">
+              <span class="kpi-label">False Positive Rate (Ham Blocked)</span>
+              <strong class="kpi-value text-teal" id="ethics-fpr-val">--</strong>
+              <p class="muted-small">Measures how often legitimate messages are wrongly flagged as spam.</p>
+            </div>
+            <div class="subcard">
+              <span class="kpi-label">False Negative Rate (Spam Missed)</span>
+              <strong class="kpi-value text-rose" id="ethics-fnr-val">--</strong>
+              <p class="muted-small">Measures how often suspicious spam slips through as Ham.</p>
+            </div>
+          </div>
+          <ul class="bullet-list" style="margin-top: 1rem;">
+            <li><strong>Dataset Bias Awareness:</strong> Historical English SMS corpus may underperform on regional slang or non-English texts.</li>
+            <li><strong>Privacy by Design:</strong> Zero cloud APIs, zero external telemetry, and zero database logging of user-submitted SMS texts.</li>
+            <li><strong>Human-in-the-Loop:</strong> The Q-Learning agent includes a <em>Quarantine / Review</em> action for borderline scores instead of silently deleting messages.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. ABOUT -->
     <section id="tab-about" class="tab-panel">
       <div class="two-col-grid">
         <div class="card">
-          <h3>Methodology &amp; Ensemble Learning</h3>
+          <h3>Machine Learning Architecture</h3>
           <ul class="bullet-list">
-            <li><strong>Stratified 60/20/20 Split:</strong> 60% Training, 20% Validation (for selecting the default model by Spam F1-score), and 20% Held-Out Test.</li>
-            <li><strong>Leakage-Free TF-IDF:</strong> Fitted strictly on the training set (1,500 max features, unigrams &amp; bigrams, sublinear TF).</li>
-            <li><strong>Models Evaluated:</strong> Decision Tree (single learner baseline), Random Forest (bagging), AdaBoost, Gradient Boosting, and XGBoost.</li>
+            <li><strong>Supervised Classification:</strong> Logistic Regression, Linear SVM, and Entropy Decision Tree.</li>
+            <li><strong>Unsupervised Analysis:</strong> PCA 2D dimensionality reduction and K-Means Clustering with Elbow Method.</li>
+            <li><strong>Ensemble Learning:</strong> Random Forest (Bagging), AdaBoost, Gradient Boosting (GBM), XGBoost, and Soft-Voting Meta-Ensemble.</li>
+            <li><strong>Reinforcement Learning &amp; Ethics:</strong> Q-Learning MDP Agent with live Bellman feedback and AI Bias/Privacy Audit.</li>
           </ul>
         </div>
         <div class="card">

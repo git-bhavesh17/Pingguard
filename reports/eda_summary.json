@@ -1,9 +1,5 @@
 {
   "raw_rows": 5574,
-  "missing_values": {
-    "label": 0,
-    "message": 0
-  },
   "duplicate_rows_removed": 414,
   "cleaned_rows": 5160,
   "ham_count": 4518,
@@ -13,15 +9,11 @@
   "length_statistics": {
     "ham": {
       "avg_char_length": 70.86,
-      "median_char_length": 53.0,
-      "avg_word_count": 14.23,
-      "median_word_count": 11.0
+      "avg_word_count": 14.23
     },
     "spam": {
       "avg_char_length": 137.41,
-      "median_char_length": 148.0,
-      "avg_word_count": 23.7,
-      "median_word_count": 25.0
+      "avg_word_count": 23.7
     }
   },
   "top_spam_terms": [

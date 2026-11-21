@@ -1,12 +1,26 @@
-const SAMPLE_MESSAGES = {
+﻿const SAMPLE_MESSAGES = {
   ham_casual: "Hey! Are we still meeting at the library around 4pm today to finish our AI lab report? Let me know if you need me to bring my laptop.",
   ham_delivery: "Hi Mum, I reached college safely. My project presentation is scheduled for 2:30 PM. Will call you once it finishes.",
   spam_prize: "CONGRATULATIONS! You have won a guaranteed £1000 cash prize in our weekly draw! Call 09061701461 immediately or visit www.prize-claim-now.com to claim your reward.",
-  spam_phish: "URGENT: Your bank account has been suspended due to incomplete KYC verification. Click http://bit.ly/verify-kyc-alert within 24 hours and enter your OTP and PIN to restore access."
+  spam_phish: "URGENT: Your bank account has been suspended due to incomplete KYC verification. Click http://bit.ly/verify-kyc-alert within 24 hours and enter your OTP and PIN to restore access.",
+  spam_obfuscated: "C0ngrats!! U have w1n a f.r.e.e $500 c@sh voucher! Cl@im urgent at bit.ly/freecash99 now!"
+};
+
+const STATE_LABELS = {
+  low_risk: "Low Risk (< 35%)",
+  borderline_risk: "Borderline Risk (35%–70%)",
+  high_risk: "High Risk (>= 70%)"
+};
+
+const ACTION_SHORT = {
+  allow_ham: "ALLOW",
+  quarantine_review: "QUARANTINE",
+  block_spam: "BLOCK"
 };
 
 let dashboardState = null;
 let chartInstances = {};
+let lastRlContext = null;
 
 function switchTab(tabId) {
   document.querySelectorAll(".nav-btn").forEach((btn) => {
@@ -41,6 +55,7 @@ async function initDashboard() {
     populateModelSelectors(data.metrics);
     renderAnalyticsCharts(data.eda);
     renderComparisonSection(data.metrics);
+    renderCce5Section(data.metrics, data.q_table);
   } catch (err) {
     alertEl.textContent = `Backend Alert: ${err.message}`;
     alertEl.classList.remove("hidden");
@@ -70,7 +85,7 @@ function populateModelSelectors(metrics) {
 
   Object.values(metrics.models).forEach((m) => {
     const isDefault = m.id === metrics.default_model_id;
-    const label = `${m.name} (${m.type})${isDefault ? " ★ Default" : ""}`;
+    const label = `${m.name} (${m.type})${isDefault ? " ★ Champion" : ""}`;
     detectorSelect.add(new Option(label, m.id, isDefault, isDefault));
     inspectorSelect.add(new Option(label, m.id, isDefault, isDefault));
   });
@@ -133,8 +148,9 @@ function renderComparisonSection(metrics) {
     const isWinner = row.model_id === metrics.default_model_id;
     if (isWinner) tr.classList.add("winner-row");
     tr.innerHTML = `
-      <td><strong>${row.model_name}</strong> ${isWinner ? '<span class="badge">Default</span>' : ""}</td>
+      <td><strong>${row.model_name}</strong> ${isWinner ? '<span class="badge">Champion</span>' : ""}</td>
       <td>${row.model_type}</td>
+      <td>${Number(row.optimal_threshold || 0.5).toFixed(2)}</td>
       <td>${row.val_f1.toFixed(4)}</td>
       <td>${(row.test_accuracy * 100).toFixed(2)}%</td>
       <td>${(row.test_precision * 100).toFixed(2)}%</td>
@@ -169,7 +185,8 @@ function updateModelInspector(modelId) {
   const modelObj = dashboardState.metrics.models[modelId];
   if (!modelObj) return;
 
-  document.getElementById("inspector-description").textContent = `${modelObj.name} (${modelObj.type}): ${modelObj.description}`;
+  document.getElementById("inspector-description").textContent =
+    `${modelObj.name} (${modelObj.type}) — Tuned Cutoff: ${modelObj.optimal_threshold} | ${modelObj.description}`;
 
   const cm = modelObj.test.confusion_matrix;
   document.getElementById("confusion-matrix-grid").innerHTML = `
@@ -195,17 +212,168 @@ function updateModelInspector(modelId) {
 
   destroyChart("featureImp");
   const topFeats = (modelObj.top_features || []).slice(0, 10);
+  const featLabels = topFeats.length ? topFeats.map((f) => f.feature) : ["Calibrated Margin Model"];
+  const featVals = topFeats.length ? topFeats.map((f) => f.importance) : [0];
   chartInstances["featureImp"] = new Chart(document.getElementById("chart-feature-importance"), {
     type: "bar",
     data: {
-      labels: topFeats.map((f) => f.feature),
-      datasets: [{ label: "Importance", data: topFeats.map((f) => f.importance), backgroundColor: "#38bdf8" }]
+      labels: featLabels,
+      datasets: [{ label: "Weight / Importance", data: featVals, backgroundColor: "#38bdf8" }]
     },
     options: { indexAxis: "y" }
   });
 }
 
-// Live SMS Prediction Form
+// ==================== CCE-5 UPGRADES & SYLLABUS LAB ====================
+function renderCce5Section(metrics, qTable) {
+  const bench = metrics.cce5_upgrade_benchmark;
+  const unsup = metrics.unsupervised_unit3;
+  const winner = metrics.models[metrics.default_model_id];
+
+  // Feature count summary
+  if (bench && bench.feature_counts) {
+    const fc = bench.feature_counts;
+    document.getElementById("cce5-feature-summary").textContent =
+      `Upgraded Feature Space: ${fc.total_features.toLocaleString()} Hybrid Features (${fc.word_tfidf.toLocaleString()} Word TF-IDF unigrams/bigrams + ${fc.char_tfidf.toLocaleString()} Character N-Grams 3–5 chars) across 8 classifiers.`;
+  }
+
+  // Before vs After Table & Bar Chart
+  if (bench) {
+    const b4 = bench.cce4_baseline;
+    const b5 = bench.cce5_enhanced;
+    const rows = [
+      { name: "Test Accuracy", v4: b4.accuracy * 100, v5: b5.accuracy * 100, suffix: "%", higherBetter: true },
+      { name: "Spam Precision", v4: b4.precision * 100, v5: b5.precision * 100, suffix: "%", higherBetter: true },
+      { name: "Spam Recall", v4: b4.recall * 100, v5: b5.recall * 100, suffix: "%", higherBetter: true },
+      { name: "Spam F1-Score", v4: b4.f1_score * 100, v5: b5.f1_score * 100, suffix: "%", higherBetter: true },
+      { name: "PR-AUC", v4: b4.pr_auc * 100, v5: b5.pr_auc * 100, suffix: "%", higherBetter: true },
+      { name: "False Positives (Ham Blocked)", v4: b4.false_positives, v5: b5.false_positives, suffix: "", higherBetter: false },
+      { name: "False Negatives (Spam Missed)", v4: b4.false_negatives, v5: b5.false_negatives, suffix: "", higherBetter: false }
+    ];
+
+    const tbody = document.getElementById("cce5-benchmark-tbody");
+    tbody.innerHTML = "";
+    rows.forEach((r) => {
+      const diff = r.v5 - r.v4;
+      const isGood = r.higherBetter ? diff >= 0 : diff <= 0;
+      const diffText = r.suffix
+        ? `${diff >= 0 ? "+" : ""}${diff.toFixed(2)}%`
+        : `${diff >= 0 ? "+" : ""}${diff}`;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${r.name}</strong></td>
+        <td>${r.suffix ? r.v4.toFixed(2) + r.suffix : r.v4}</td>
+        <td><strong>${r.suffix ? r.v5.toFixed(2) + r.suffix : r.v5}</strong></td>
+        <td class="${isGood ? "delta-pos" : "delta-neg"}">${diffText}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    destroyChart("cce5Bench");
+    chartInstances["cce5Bench"] = new Chart(document.getElementById("chart-cce5-benchmark"), {
+      type: "bar",
+      data: {
+        labels: ["Accuracy", "Precision", "Recall", "Spam F1", "PR-AUC"],
+        datasets: [
+          { label: "v1.0 Baseline (RF)", data: [b4.accuracy, b4.precision, b4.recall, b4.f1_score, b4.pr_auc], backgroundColor: "#64748b" },
+          { label: "v2.0 Enhanced", data: [b5.accuracy, b5.precision, b5.recall, b5.f1_score, b5.pr_auc], backgroundColor: "#a855f7" }
+        ]
+      },
+      options: { scales: { y: { min: 0.8, max: 1.0 } } }
+    });
+  }
+
+  // Unit III: PCA 2D Scatter & K-Means Elbow
+  if (unsup) {
+    const varPct = unsup.pca_explained_variance;
+    document.getElementById("pca-variance-badge").textContent = `PC1: ${varPct[0]}% | PC2: ${varPct[1]}%`;
+
+    destroyChart("pcaScatter");
+    chartInstances["pcaScatter"] = new Chart(document.getElementById("chart-pca-scatter"), {
+      type: "scatter",
+      data: {
+        datasets: [
+          { label: "Ham Messages", data: unsup.pca_points.ham, backgroundColor: "rgba(20, 184, 166, 0.55)", pointRadius: 3 },
+          { label: "Spam Messages", data: unsup.pca_points.spam, backgroundColor: "rgba(244, 63, 94, 0.85)", pointRadius: 4 }
+        ]
+      },
+      options: {
+        scales: {
+          x: { title: { display: true, text: "Principal Component 1 (PC1)" } },
+          y: { title: { display: true, text: "Principal Component 2 (PC2)" } }
+        }
+      }
+    });
+
+    destroyChart("kmeansElbow");
+    chartInstances["kmeansElbow"] = new Chart(document.getElementById("chart-kmeans-elbow"), {
+      type: "line",
+      data: {
+        labels: unsup.elbow_method.k_values.map((k) => `K = ${k}`),
+        datasets: [{
+          label: "Within-Cluster Inertia (SSE)",
+          data: unsup.elbow_method.inertia,
+          borderColor: "#38bdf8",
+          backgroundColor: "rgba(56, 189, 248, 0.2)",
+          tension: 0.25,
+          fill: true,
+          pointRadius: 5
+        }]
+      },
+      options: {
+        scales: {
+          x: { title: { display: true, text: "Number of Clusters (K)" } },
+          y: { title: { display: true, text: "Inertia (Lower = Tighter Clusters)" } }
+        }
+      }
+    });
+
+    const clusterGrid = document.getElementById("kmeans-clusters-grid");
+    clusterGrid.innerHTML = "";
+    unsup.spam_clusters.forEach((c) => {
+      const div = document.createElement("div");
+      div.className = "subcard";
+      const pills = c.top_keywords.map((kw) => `<span class="keyword-pill">${kw}</span>`).join("");
+      div.innerHTML = `
+        <h4>Spam Cluster #${c.cluster_id} <span class="badge">${c.message_count} SMS</span></h4>
+        <p class="muted-small">Dominant Centroid Terms:</p>
+        <div class="keyword-pills">${pills}</div>
+      `;
+      clusterGrid.appendChild(div);
+    });
+  }
+
+  // Unit V: Ethics FPR / FNR
+  if (winner && winner.test) {
+    document.getElementById("ethics-fpr-val").textContent = `${(winner.test.false_positive_rate * 100).toFixed(2)}%`;
+    document.getElementById("ethics-fnr-val").textContent = `${(winner.test.false_negative_rate * 100).toFixed(2)}%`;
+  }
+
+  // Unit V: Q-Table
+  renderQTable(qTable);
+}
+
+function renderQTable(qTable) {
+  if (!qTable || !qTable.q_values) return;
+  document.getElementById("q-feedback-count").textContent = `Live Updates: ${qTable.feedback_updates || 0}`;
+  const tbody = document.getElementById("q-table-tbody");
+  tbody.innerHTML = "";
+
+  Object.entries(qTable.q_values).forEach(([state, actions]) => {
+    const bestAct = Object.keys(actions).reduce((a, b) => (actions[a] >= actions[b] ? a : b));
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><strong>${STATE_LABELS[state] || state}</strong></td>
+      <td>${Number(actions.allow_ham).toFixed(2)}</td>
+      <td>${Number(actions.quarantine_review).toFixed(2)}</td>
+      <td>${Number(actions.block_spam).toFixed(2)}</td>
+      <td><span class="badge">${ACTION_SHORT[bestAct] || bestAct}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ==================== LIVE SMS PREDICTION & RL FEEDBACK ====================
 const smsInput = document.getElementById("sms-input");
 const charCounter = document.getElementById("char-counter");
 const errorBox = document.getElementById("detector-error");
@@ -269,10 +437,19 @@ document.getElementById("predict-form").addEventListener("submit", async (e) => 
     titleEl.textContent = res.is_spam ? "SPAM (Suspicious Message)" : "HAM (Predicted Legitimate)";
     titleEl.className = res.is_spam ? "text-rose" : "text-teal";
     document.getElementById("verdict-model-badge").textContent = `Model: ${res.model_name}`;
+    document.getElementById("decision-threshold-badge").textContent = `Tuned Cutoff: ${(res.decision_threshold * 100).toFixed(0)}%`;
 
     document.getElementById("score-percentage").textContent = `${res.estimated_spam_percentage}%`;
     scoreBarEl.style.width = `${Math.min(100, Math.max(2, res.estimated_spam_percentage))}%`;
-    scoreBarEl.style.backgroundColor = res.estimated_spam_percentage >= 50 ? "#f43f5e" : "#14b8a6";
+    scoreBarEl.style.backgroundColor = res.is_spam ? "#f43f5e" : "#14b8a6";
+
+    // Unit V: Populate RL Agent Box
+    if (res.rl_agent) {
+      lastRlContext = { state: res.rl_agent.state, action: res.rl_agent.action };
+      document.getElementById("rl-state-badge").textContent = `State: ${STATE_LABELS[res.rl_agent.state] || res.rl_agent.state}`;
+      document.getElementById("rl-action-title").textContent = res.rl_agent.action_label;
+      document.getElementById("rl-feedback-msg").classList.add("hidden");
+    }
 
     warningListEl.innerHTML = "";
     if (!res.warning_signs || res.warning_signs.length === 0) {
@@ -294,5 +471,33 @@ document.getElementById("predict-form").addEventListener("submit", async (e) => 
     errorBox.classList.remove("hidden");
   }
 });
+
+async function sendRlFeedback(isCorrect) {
+  if (!lastRlContext) return;
+  const msgEl = document.getElementById("rl-feedback-msg");
+  try {
+    const response = await fetch("/api/rl/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        state: lastRlContext.state,
+        action: lastRlContext.action,
+        is_correct: isCorrect
+      })
+    });
+    const data = await response.json();
+    if (response.ok) {
+      msgEl.textContent = data.message;
+      msgEl.classList.remove("hidden");
+      renderQTable(data.q_table);
+    }
+  } catch (err) {
+    msgEl.textContent = `Feedback failed: ${err.message}`;
+    msgEl.classList.remove("hidden");
+  }
+}
+
+document.getElementById("rl-feedback-correct").addEventListener("click", () => sendRlFeedback(true));
+document.getElementById("rl-feedback-wrong").addEventListener("click", () => sendRlFeedback(false));
 
 document.addEventListener("DOMContentLoaded", initDashboard);

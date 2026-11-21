@@ -1,0 +1,32 @@
+{
+  "alpha": 0.15,
+  "gamma": 0.8,
+  "feedback_updates": 0,
+  "states": [
+    "low_risk",
+    "borderline_risk",
+    "high_risk"
+  ],
+  "actions": [
+    "allow_ham",
+    "quarantine_review",
+    "block_spam"
+  ],
+  "q_values": {
+    "low_risk": {
+      "allow_ham": 49.984,
+      "quarantine_review": 37.984,
+      "block_spam": 24.984
+    },
+    "borderline_risk": {
+      "allow_ham": 5.258,
+      "quarantine_review": 8.326,
+      "block_spam": 5.662
+    },
+    "high_risk": {
+      "allow_ham": 27.984,
+      "quarantine_review": 43.984,
+      "block_spam": 49.984
+    }
+  }
+}
